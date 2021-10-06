@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-wgpu_engine = {git="https://github.com/Uniformbuffer3/wgpu_engine"}
+wgpu_engine = {git="https://github.com/Uniformbuffer3/wgpu_engine", default-features=false}
 image = "*"
 ultraviolet = {version="*",features=["bytemuck"]}
 inline-spirv = "*"
@@ -16,5 +16,15 @@ field-offset = "*"
 log = "*"
 env_logger = "*"
 
+[features]
+default = ["wgpu_custom_backend"]
+wgpu_standard_backend = ["wgpu_engine/wgpu_standard_backend"]
+wgpu_custom_backend = ["wgpu_engine/wgpu_custom_backend"]
+
 [dev-dependencies]
 
+[patch."https://github.com/Uniformbuffer3/platform_abstraction_layer.git"]
+pal = { path = "../pal"}
+
+[patch."https://github.com/Uniformbuffer3/wgpu_engine"]
+wgpu_engine = { path = "../wgpu_engine" }

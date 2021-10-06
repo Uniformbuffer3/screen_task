@@ -219,12 +219,18 @@ impl ScreenTask {
     }
 
     pub fn features_and_limits() -> (wgpu::Features, wgpu::Limits) {
-        let features = wgpu::Features::EXTERNAL_MEMORY
-            | wgpu::Features::PUSH_CONSTANTS
+        let mut features =
+            wgpu::Features::PUSH_CONSTANTS
             | wgpu::Features::UNSIZED_BINDING_ARRAY
             | wgpu::Features::SAMPLED_TEXTURE_BINDING_ARRAY
             | wgpu::Features::SAMPLED_TEXTURE_ARRAY_DYNAMIC_INDEXING
             | wgpu::Features::SAMPLED_TEXTURE_ARRAY_NON_UNIFORM_INDEXING;
+
+        #[cfg(feature="wgpu_custom_backend")]
+        {
+            features |= wgpu::Features::EXTERNAL_MEMORY;
+        }
+
 
         let mut limits = wgpu::Limits::default();
         limits.max_push_constant_size = std::mem::size_of::<PushConstants>() as u32;
