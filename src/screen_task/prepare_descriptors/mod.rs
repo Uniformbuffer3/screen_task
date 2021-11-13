@@ -9,7 +9,6 @@ mod render_pipeline;
 use crate::DeviceResources;
 use crate::Display;
 use crate::DisplayResources;
-use crate::PushConstants;
 use crate::ScreenTask;
 
 use crate::shaders::*;
@@ -53,9 +52,9 @@ impl ScreenTask {
             min_filter: wgpu::FilterMode::Linear,
             mag_filter: wgpu::FilterMode::Linear,
             mipmap_filter: wgpu::FilterMode::Nearest,
-            lod_min_clamp: 0.0,
-            lod_max_clamp: f32::MAX,
-            compare: None,
+            lod_min_clamp: -100.0,
+            lod_max_clamp: 100.0,
+            compare: Some(wgpu::CompareFunction::LessEqual),
             anisotropy_clamp: None,
             border_color: None,
         };
@@ -87,23 +86,16 @@ impl ScreenTask {
             .add_pipeline_layout_descriptor(pipeline_layout_descriptor)
             .unwrap();
 
-        let display = Display::new(update_context, device, swapchain, display_position);
-        let render_pipeline_descriptor = Self::prepare_render_pipeline(
+        let display = Display::new(update_context, device, swapchain, [0, 0]);
+        let display_resources = DisplayResources::new(
             update_context,
-            device,
-            &display,
+            display,
             pipeline_layout,
             vertex_shader,
             fragment_shader,
+            &surface_manager,
         );
-        let render_pipeline = update_context
-            .add_render_pipeline_descriptor(render_pipeline_descriptor)
-            .unwrap();
-
-        let displays = vec![DisplayResources {
-            display,
-            render_pipeline,
-        }];
+        let displays = vec![display_resources];
 
         let command_buffer_descriptor = Self::prepare_command_buffer(
             update_context,

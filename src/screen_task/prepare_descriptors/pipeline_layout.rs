@@ -4,7 +4,7 @@ use wgpu_engine::*;
 
 impl ScreenTask {
     pub(crate) fn prepare_pipeline_layout(
-        update_context: &mut UpdateContext,
+        _update_context: &mut UpdateContext,
         device: DeviceId,
         bind_group_layout: BindGroupLayoutId,
     ) -> PipelineLayoutDescriptor {

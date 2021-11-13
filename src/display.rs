@@ -1,3 +1,4 @@
+use crate::surface_manager::SurfaceManager;
 use std::num::NonZeroU32;
 use wgpu_engine::*;
 
@@ -24,16 +25,16 @@ impl Display {
             device,
             label: String::from("DepthStencil"),
             source: TextureSource::Local,
-            size: wgpu::Extent3d {
+            size: wgpu_engine::Extent3d {
                 width: swapchain_descriptor.width,
                 height: swapchain_descriptor.height,
                 depth_or_array_layers: 1,
             },
             mip_level_count: 1,
             sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
+            dimension: wgpu_engine::TextureDimension::D2,
             format: crate::DEPTH_STENCIL_FORMAT,
-            usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
+            usage: wgpu_engine::TextureUsage::RENDER_ATTACHMENT,
         };
         let depth_stencil = update_context
             .add_texture_descriptor(texture_descriptor)
@@ -43,9 +44,9 @@ impl Display {
             device,
             label: String::from("DepthStencil view"),
             texture: depth_stencil,
-            dimension: wgpu::TextureViewDimension::D2,
+            dimension: wgpu_engine::TextureViewDimension::D2,
             format: crate::DEPTH_STENCIL_FORMAT,
-            aspect: wgpu::TextureAspect::DepthOnly,
+            aspect: wgpu_engine::TextureAspect::DepthOnly,
             base_mip_level: 0,
             mip_level_count: Some(NonZeroU32::new(1).unwrap()),
             base_array_layer: 0,
@@ -70,21 +71,20 @@ impl Display {
             .swapchain_descriptor_ref(&self.swapchain)
             .unwrap();
         self.size = [swapchain_descriptor.width, swapchain_descriptor.height];
-
         let texture_descriptor = TextureDescriptor {
             device: self.device,
             label: String::from("DepthStencil"),
             source: TextureSource::Local,
-            size: wgpu::Extent3d {
+            size: wgpu_engine::Extent3d {
                 width: swapchain_descriptor.width,
                 height: swapchain_descriptor.height,
                 depth_or_array_layers: 1,
             },
             mip_level_count: 1,
             sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
+            dimension: wgpu_engine::TextureDimension::D2,
             format: crate::DEPTH_STENCIL_FORMAT,
-            usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
+            usage: wgpu_engine::TextureUsage::RENDER_ATTACHMENT,
         };
         assert!(
             update_context.update_texture_descriptor(&mut self.depth_stencil, texture_descriptor)
@@ -94,9 +94,9 @@ impl Display {
             device: self.device,
             label: String::from("DepthStencil"),
             texture: self.depth_stencil,
-            dimension: wgpu::TextureViewDimension::D2,
+            dimension: wgpu_engine::TextureViewDimension::D2,
             format: crate::DEPTH_STENCIL_FORMAT,
-            aspect: wgpu::TextureAspect::DepthOnly,
+            aspect: wgpu_engine::TextureAspect::DepthOnly,
             base_mip_level: 0,
             mip_level_count: Some(NonZeroU32::new(1).unwrap()),
             base_array_layer: 0,
@@ -121,5 +121,42 @@ impl Display {
     }
     pub fn size(&self) -> [u32; 2] {
         self.size
+    }
+}
+
+pub struct DisplayResources {
+    pub display: Display,
+    pub render_pipeline_ready: bool,
+    pub render_pipeline: RenderPipelineId,
+}
+impl DisplayResources {
+    pub fn new(
+        update_context: &mut UpdateContext,
+        display: Display,
+        pipeline_layout: PipelineLayoutId,
+        vertex_shader: ShaderModuleId,
+        fragment_shader: ShaderModuleId,
+        surface_manager: &SurfaceManager,
+    ) -> Self {
+        let device = display.device;
+        let (render_pipeline_descriptor, render_pipeline_ready) =
+            crate::screen_task::ScreenTask::prepare_render_pipeline(
+                update_context,
+                device,
+                &display,
+                pipeline_layout,
+                vertex_shader,
+                fragment_shader,
+                surface_manager,
+            );
+        let render_pipeline = update_context
+            .add_render_pipeline_descriptor(render_pipeline_descriptor)
+            .unwrap();
+
+        DisplayResources {
+            display,
+            render_pipeline,
+            render_pipeline_ready,
+        }
     }
 }

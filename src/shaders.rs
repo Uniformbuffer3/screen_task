@@ -21,7 +21,7 @@ void main() {
             vec3 vertex = position;
 
             vec4 projected_vertex = projection_matrix * vec4(vertex,1.0);
-            gl_Position = vec4(projected_vertex.xy,0.0,1.0);
+            gl_Position = vec4(projected_vertex.xyz,1.0);
             fragment_pos = vec3(0.0,0.0,projected_vertex.z);
             break;
         }
@@ -29,7 +29,7 @@ void main() {
             vec3 vertex = vec3(position.x,position.y+size.y,position.z);
 
             vec4 projected_vertex = projection_matrix * vec4(vertex,1.0);
-            gl_Position = vec4(projected_vertex.xy,0.0,1.0);
+            gl_Position = vec4(projected_vertex.xyz,1.0);
             fragment_pos = vec3(0.0,1.0,projected_vertex.z);
             break;
         }
@@ -37,7 +37,7 @@ void main() {
             vec3 vertex = vec3(position.x+size.x,position.y,position.z);
 
             vec4 projected_vertex = projection_matrix * vec4(vertex,1.0);
-            gl_Position = vec4(projected_vertex.xy,0.0,1.0);
+            gl_Position = vec4(projected_vertex.xyz,1.0);
             fragment_pos = vec3(1.0,0.0,projected_vertex.z);
             break;
         }
@@ -45,7 +45,7 @@ void main() {
             vec3 vertex = vec3(position.x+size.x,position.y+size.y,position.z);
 
             vec4 projected_vertex = projection_matrix * vec4(vertex,1.0);
-            gl_Position = vec4(projected_vertex.xy,0.0,1.0);
+            gl_Position = vec4(projected_vertex.xyz,1.0);
             fragment_pos = vec3(1.0,1.0,projected_vertex.z);
             break;
         }
@@ -78,6 +78,8 @@ layout(set = 0, binding = 1) uniform texture2D textures[];
 
 
 void main() {
+    //if(fragment_position.z == 0.5){discard;}
+
     vec4 color = vec4(texture(sampler2D(textures[index], samp), fragment_position.xy));
     if(color.w == 0.0) {discard;}
     else{fragment_color = color;}

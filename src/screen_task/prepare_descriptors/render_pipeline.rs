@@ -1,6 +1,7 @@
 use crate::display::Display;
 use crate::surface::Surface;
 use crate::ScreenTask;
+use crate::SurfaceManager;
 use wgpu_engine::*;
 
 impl ScreenTask {
@@ -11,13 +12,15 @@ impl ScreenTask {
         layout: PipelineLayoutId,
         vertex_shader: ShaderModuleId,
         fragment_shader: ShaderModuleId,
-    ) -> RenderPipelineDescriptor {
+        surface_manager: &SurfaceManager,
+    ) -> (RenderPipelineDescriptor, bool) {
         let format = update_context
             .swapchain_descriptor_ref(display.swapchain())
             .unwrap()
             .format;
+        let ready = surface_manager.len() > 0;
 
-        RenderPipelineDescriptor {
+        let descriptor = RenderPipelineDescriptor {
             device,
             label: Self::TASK_NAME.to_string() + " render pipeline",
             layout: Some(layout),
@@ -43,20 +46,25 @@ impl ScreenTask {
             multisample: wgpu::MultisampleState::default(),
             depth_stencil: Some(DepthStencilState {
                 id: *display.depth_stencil_view(),
-                depth_write_enabled: false,
-                depth_compare: wgpu::CompareFunction::LessEqual,
+                depth_write_enabled: true,
+                depth_compare: wgpu::CompareFunction::Less,
                 stencil: wgpu::StencilState::default(),
                 bias: wgpu::DepthBiasState::default(),
             }),
-            fragment: Some(FragmentState {
-                module: fragment_shader,
-                entry_point: String::from("main"),
-                targets: vec![wgpu::ColorTargetState {
-                    format,
-                    blend: None,
-                    write_mask: wgpu::ColorWrite::ALL,
-                }],
-            }),
-        }
+            fragment: if ready {
+                Some(FragmentState {
+                    module: fragment_shader,
+                    entry_point: String::from("main"),
+                    targets: vec![wgpu::ColorTargetState {
+                        format,
+                        blend: None,
+                        write_mask: wgpu::ColorWrite::ALL,
+                    }],
+                })
+            } else {
+                None
+            },
+        };
+        (descriptor, ready)
     }
 }

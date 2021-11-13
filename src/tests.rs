@@ -1,9 +1,10 @@
-use wgpu_engine::*;
-use crate::ScreenTask;
 use crate::PushConstants;
+use crate::ScreenTask;
+use crate::SurfaceSource;
+use wgpu_engine::*;
 
 #[test]
-fn screen_task() {
+fn swap_test() {
     env_logger::init();
 
     let features = wgpu::Features::EXTERNAL_MEMORY
@@ -16,134 +17,154 @@ fn screen_task() {
     let mut limits = wgpu::Limits::default();
     limits.max_push_constant_size = std::mem::size_of::<PushConstants>() as u32;
 
+    let mut upper = false;
+    let mut time = std::time::Instant::now();
     wgpu_engine::quick_run(
         1,
         features,
         limits,
-        |_id, _tokio_runtime, update_context| ScreenTask::new(update_context)
+        |_id, _tokio_runtime, update_context| {
+            let mut screen_task = ScreenTask::new(update_context);
+            //screen_task.create_surface(0, String::from("surface"), SurfaceSource::File{path: std::path::PathBuf::from("./gfx_logo.png")}, [0,0,0], [100,100]);
+            //screen_task.create_surface(1, String::from("surface"), SurfaceSource::File{path: std::path::PathBuf::from("./gfx_logo.png")}, [50,50,1], [100,100]);
+            screen_task.create_surface(
+                0,
+                String::from("surface"),
+                SurfaceSource::from_file_path(std::path::PathBuf::from("./gfx_logo.png")),
+                [0, 0, 0],
+                [100, 100],
+            );
+            screen_task.create_surface(
+                1,
+                String::from("surface"),
+                SurfaceSource::from_file_path(std::path::PathBuf::from("./gfx_logo.png")),
+                [0, 0, 1],
+                [200, 200],
+            );
+            screen_task
+        },
+        |screen_task| {
+            if time.elapsed().as_millis() > 3000 {
+                time = std::time::Instant::now();
+                upper = !upper;
+                println!("Swapping surfaces!");
+                if upper {
+                    screen_task.move_surface(0, [0, 0, 0]);
+                    screen_task.move_surface(1, [0, 0, 1]);
+                } else {
+                    screen_task.move_surface(1, [0, 0, 0]);
+                    screen_task.move_surface(0, [0, 0, 1]);
+                }
+            }
+            std::thread::sleep(std::time::Duration::from_millis(1000 / 60));
+        },
     );
 }
 
-/*
 #[test]
-fn rectangle_task() {
-    use std::collections::HashMap;
+fn destroy_surface_test() {
     env_logger::init();
-    use crate::WGpuEngine;
-    use pal::definitions::*;
 
+    let features = wgpu::Features::EXTERNAL_MEMORY
+        | wgpu::Features::PUSH_CONSTANTS
+        | wgpu::Features::UNSIZED_BINDING_ARRAY
+        | wgpu::Features::SAMPLED_TEXTURE_BINDING_ARRAY
+        | wgpu::Features::SAMPLED_TEXTURE_ARRAY_DYNAMIC_INDEXING
+        | wgpu::Features::SAMPLED_TEXTURE_ARRAY_NON_UNIFORM_INDEXING;
 
+    let mut limits = wgpu::Limits::default();
+    limits.max_push_constant_size = std::mem::size_of::<PushConstants>() as u32;
 
-
-    let mut wgpu_engine = WGpuEngine::new(features, limits.clone());
-
-    let mut platform = pal::Platform::new(vec![Box::new(wgpu_engine.wgpu_context())]);
-    platform.request(vec![Request::from(SurfaceRequest::Create(None))]);
-
-    let surfaces: HashMap<SurfaceId, (EntityId, [u32; 2])> = platform
-        .events()
-        .into_iter()
-        .filter_map(|event| match event {
-            pal::Event::Surface(ref surface_event) => {
-                let surface_id = surface_event.id;
-                match &surface_event.event_type {
-                    pal::SurfaceEventType::Added(surface_info) => {
-                        if let Surface::WGpu(surface) = &surface_info.surface {
-                            let resource_id = wgpu_engine.create_surface(
-                                String::from("MainSurface"),
-                                surface.clone(),
-                                surface_info.size.width,
-                                surface_info.size.height,
-                            );
-
-                            match resource_id {
-                                Ok(resource_id) => Some((
-                                    surface_id,
-                                    (
-                                        resource_id,
-                                        [surface_info.size.width, surface_info.size.height],
-                                    ),
-                                )),
-                                Err(_) => None,
-                            }
-                        } else {
-                            panic!("It is not of WGpu type");
-                        }
-                    }
-                    _ => None,
-                }
-            }
-            _ => None,
-        })
-        .collect();
-
-    let target_surface = *surfaces.values().next().unwrap();
-
-    let mut task = wgpu_engine
-        .create_task(
-            "ScreenTask".into(),
-            features,
-            limits,
-            move |context, resources| {
-                ScreenTask::new(context, resources, target_surface.0, target_surface.1)
-            },
-        )
-        .unwrap();
-
-    task.create_surface(
-        String::from("Surface"),
-        SurfaceSource::File {
-            path: PathBuf::from("/home/fabio/wgpu_engine/src/logo.png"),
+    let mut removed = false;
+    let time = std::time::Instant::now();
+    wgpu_engine::quick_run(
+        1,
+        features,
+        limits,
+        |_id, _tokio_runtime, update_context| {
+            let mut screen_task = ScreenTask::new(update_context);
+            screen_task.create_surface(
+                0,
+                String::from("surface"),
+                SurfaceSource::from_file_path(std::path::PathBuf::from("./gfx_logo.png")),
+                [0, 0, 0],
+                [100, 100],
+            );
+            screen_task
         },
-        [150, 150, 0],
-        [100, 100],
-    );
-    //task.create_surface_from_file(String::from("/home/fabio/wgpu_engine/src/logo.png"));
-
-    let mut tasks = vec![task];
-    'main_loop: loop {
-        for event in platform.events() {
-            match event {
-                pal::Event::Surface(ref surface_event) => {
-                    let surface_id = surface_event.id;
-                    let resource_id = match surfaces.get(&surface_id) {
-                        Some(resource_id) => resource_id.0,
-                        None => continue,
-                    };
-                    match &surface_event.event_type {
-                        pal::SurfaceEventType::Added(surface_info) => {
-                            if let Surface::WGpu(surface) = &surface_info.surface {
-                                wgpu_engine
-                                    .create_surface(
-                                        String::from("MainSurface"),
-                                        surface.clone(),
-                                        surface_info.size.width,
-                                        surface_info.size.height,
-                                    )
-                                    .unwrap();
-                            } else {
-                                panic!("It is not of WGpu type");
-                            }
-                        }
-                        pal::SurfaceEventType::Resized(size) => {
-                            wgpu_engine
-                                .resize_surface(&resource_id, size.width, size.height)
-                                .unwrap();
-                        }
-                        pal::SurfaceEventType::Removed => {
-                            wgpu_engine.remove_surface(resource_id);
-                            if wgpu_engine.surface_count() == 0 {
-                                break 'main_loop;
-                            }
-                        }
-                        _ => {}
-                    }
-                }
-                _ => {}
+        |screen_task| {
+            if time.elapsed().as_millis() > 3000 && !removed {
+                screen_task.remove_surface(0);
+                removed = true;
+                println!("Destroying surface!");
             }
-        }
+            std::thread::sleep(std::time::Duration::from_millis(1000 / 60));
+        },
+    );
+}
 
-        wgpu_engine.dispatch_tasks(&mut tasks);
-        std::thread::sleep(std::time::Duration::from_secs(3));
-    }
-}*/
+#[test]
+fn multioutput_test() {
+    env_logger::init();
+
+    let features = wgpu::Features::EXTERNAL_MEMORY
+        | wgpu::Features::PUSH_CONSTANTS
+        | wgpu::Features::UNSIZED_BINDING_ARRAY
+        | wgpu::Features::SAMPLED_TEXTURE_BINDING_ARRAY
+        | wgpu::Features::SAMPLED_TEXTURE_ARRAY_DYNAMIC_INDEXING
+        | wgpu::Features::SAMPLED_TEXTURE_ARRAY_NON_UNIFORM_INDEXING;
+
+    let mut limits = wgpu::Limits::default();
+    limits.max_push_constant_size = std::mem::size_of::<PushConstants>() as u32;
+
+    let mut upper = false;
+    let mut time = std::time::Instant::now();
+    wgpu_engine::quick_run(
+        2,
+        features,
+        limits,
+        |_id, _tokio_runtime, update_context| {
+            let mut screen_task = ScreenTask::new(update_context);
+            //screen_task.create_surface(0, String::from("surface"), SurfaceSource::File{path: std::path::PathBuf::from("./gfx_logo.png")}, [0,0,0], [100,100]);
+            //screen_task.create_surface(1, String::from("surface"), SurfaceSource::File{path: std::path::PathBuf::from("./gfx_logo.png")}, [50,50,1], [100,100]);
+            screen_task.create_surface(
+                0,
+                String::from("surface"),
+                SurfaceSource::from_file_path(std::path::PathBuf::from("./gfx_logo.png")),
+                [0, 0, 0],
+                [100, 100],
+            );
+            screen_task.create_surface(
+                1,
+                String::from("surface"),
+                SurfaceSource::from_file_path(std::path::PathBuf::from("./gfx_logo.png")),
+                [0, 0, 1],
+                [200, 200],
+            );
+            screen_task
+        },
+        |screen_task| {
+            if time.elapsed().as_millis() > 3000 {
+                time = std::time::Instant::now();
+                upper = !upper;
+                println!("Swapping surfaces!");
+                if upper {
+                    screen_task.move_surface(0, [0, 0, 0]);
+                    screen_task.move_surface(1, [0, 0, 1]);
+                } else {
+                    screen_task.move_surface(1, [0, 0, 0]);
+                    screen_task.move_surface(0, [0, 0, 1]);
+                }
+            }
+            std::thread::sleep(std::time::Duration::from_millis(1000 / 60));
+        },
+    );
+}
+
+#[test]
+fn projection_matrix_test() {
+    use ultraviolet::{Mat4, Vec4};
+    let surface_position = Vec4::new(100.0,100.0,0.0,1.0);
+    let push_constants = PushConstants::new([800,800],1024);
+    println!("{:#?}",push_constants.projection_matrix * surface_position);
+}

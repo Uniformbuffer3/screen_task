@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-wgpu_engine = {git="https://github.com/Uniformbuffer3/wgpu_engine", default-features=false}
+wgpu_engine = {git="https://github.com/Uniformbuffer3/wgpu_engine"}
 image = "*"
 ultraviolet = {version="*",features=["bytemuck"]}
 inline-spirv = "*"
@@ -23,8 +23,20 @@ wgpu_custom_backend = ["wgpu_engine/wgpu_custom_backend"]
 
 [dev-dependencies]
 
-#[patch."https://github.com/Uniformbuffer3/platform_abstraction_layer.git"]
-#pal = { path = "../pal"}
+[patch."https://github.com/Uniformbuffer3/platform_abstraction_layer.git"]
+pal = { path = "../pal"}
 
-#[patch."https://github.com/Uniformbuffer3/wgpu_engine"]
-#wgpu_engine = { path = "../wgpu_engine" }
+[patch."https://github.com/Uniformbuffer3/wgpu_engine"]
+wgpu_engine = { path = "../wgpu_engine" }
+
+[patch."https://github.com/Uniformbuffer3/wgpu.git"]
+wgpu_custom = { path = "../wgpu/wgpu" ,package="wgpu"}
+
+[patch."https://github.com/Uniformbuffer3/gfx"]
+gfx-hal = { path = "../gfx/src/hal" }
+gfx-backend-empty = { path = "../gfx/src/backend/empty" }
+gfx-backend-vulkan = { path = "../gfx/src/backend/vulkan" }
+gfx-backend-gl = { path = "../gfx/src/backend/gl" }
+gfx-backend-dx12 = { path = "../gfx/src/backend/dx12" }
+gfx-backend-dx11 = { path = "../gfx/src/backend/dx11" }
+gfx-backend-metal = { path = "../gfx/src/backend/metal" }
