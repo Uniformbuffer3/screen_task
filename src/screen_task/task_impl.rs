@@ -10,19 +10,31 @@ impl TaskTrait for ScreenTask {
     }
 
     fn update_resources(&mut self, update_context: &mut UpdateContext) {
+        self.devices.values_mut().for_each(|device_resources| {
+            device_resources.data_copy_command_buffer_updated = false;
+        });
+
         let events = update_context.events().clone();
         events.iter().for_each(|event| match event {
-            ResourceEvent::SwapchainCreated(swapchain) => {
+            ResourceEvent::SwapchainCreated {
+                external_id,
+                swapchain,
+            } => {
                 let device = update_context.entity_device_id(swapchain).unwrap();
                 match self.devices.entry(device) {
                     Entry::Vacant(vacant) => {
-                        let resources =
-                            Self::init_device_resources(update_context, device, *swapchain, [0, 0]);
+                        let resources = Self::init_device_resources(
+                            update_context,
+                            *external_id,
+                            device,
+                            *swapchain,
+                        );
                         vacant.insert(resources);
                     }
                     Entry::Occupied(mut occupied) => {
                         let device_resources = occupied.get_mut();
-                        let display = Display::new(update_context, device, *swapchain, [0, 0]);
+                        let display =
+                            Display::new(update_context, *external_id, device, *swapchain, [0, 0]);
                         let display_resources = DisplayResources::new(
                             update_context,
                             display,
@@ -61,20 +73,21 @@ impl TaskTrait for ScreenTask {
                 });
             }
             ResourceEvent::SwapchainUpdated(swapchain) => {
-                self.devices.iter_mut().find_map(|(device,device_resources)| {
-                    Self::update_command_buffer(update_context,*device,device_resources);
-                    let result = device_resources.displays.iter_mut().find_map(|display| {
-                        if display.display.swapchain() == swapchain {
-                            display.display.update(update_context);
-                            Some(())
-                        } else {
-                            None
-                        }
+                self.devices
+                    .iter_mut()
+                    .find_map(|(device, device_resources)| {
+                        Self::update_command_buffer(update_context, *device, device_resources);
+                        let result = device_resources.displays.iter_mut().find_map(|display| {
+                            if display.display.swapchain() == swapchain {
+                                display.display.update(update_context);
+                                Some(())
+                            } else {
+                                None
+                            }
+                        });
+                        //
+                        result
                     });
-                    //
-                    result
-                });
-
             }
         });
 

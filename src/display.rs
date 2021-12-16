@@ -3,21 +3,23 @@ use std::num::NonZeroU32;
 use wgpu_engine::*;
 
 pub struct Display {
+    external_id: usize,
     device: DeviceId,
     swapchain: SwapchainId,
 
     depth_stencil: TextureId,
     depth_stencil_view: TextureViewId,
 
-    position: [u32; 2],
+    position: [i32; 2],
     size: [u32; 2],
 }
 impl Display {
     pub fn new(
         update_context: &mut UpdateContext,
+        external_id: usize,
         device: DeviceId,
         swapchain: SwapchainId,
-        position: [u32; 2],
+        position: [i32; 2],
     ) -> Self {
         let swapchain_descriptor = update_context.swapchain_descriptor_ref(&swapchain).unwrap();
         let size = [swapchain_descriptor.width, swapchain_descriptor.height];
@@ -57,6 +59,7 @@ impl Display {
             .unwrap();
 
         Self {
+            external_id,
             device,
             swapchain,
             depth_stencil,
@@ -106,6 +109,13 @@ impl Display {
             .update_texture_view_descriptor(&mut self.depth_stencil_view, texture_view_descriptor));
     }
 
+    pub fn move_output(&mut self, position: [i32; 2]) {
+        self.position = position;
+    }
+
+    pub fn external_id(&self) -> usize {
+        self.external_id
+    }
     pub fn swapchain(&self) -> &SwapchainId {
         &self.swapchain
     }
@@ -116,7 +126,7 @@ impl Display {
         &self.depth_stencil_view
     }
 
-    pub fn position(&self) -> [u32; 2] {
+    pub fn position(&self) -> [i32; 2] {
         self.position
     }
     pub fn size(&self) -> [u32; 2] {

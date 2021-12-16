@@ -14,6 +14,7 @@ impl ScreenTask {
         fragment_shader: ShaderModuleId,
         surface_manager: &SurfaceManager,
     ) -> (RenderPipelineDescriptor, bool) {
+        log::info!(target: "ScreenTask","Preparing render pipeline descriptor");
         let format = update_context
             .swapchain_descriptor_ref(display.swapchain())
             .unwrap()

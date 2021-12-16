@@ -11,7 +11,7 @@ impl ScreenTask {
         sampler: SamplerId,
     ) -> BindGroupDescriptor {
         let views = surface_manager.rectangle_views();
-        log::info!(target: "ScreenTask","Preparing bind group with {} images",views.len());
+        log::info!(target: "ScreenTask","Preparing bind group descriptor with {} images",surface_manager.len());
         let mut entries = Vec::new();
         entries.push(BindGroupEntry {
             binding: 0,

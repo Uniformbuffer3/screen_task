@@ -83,7 +83,6 @@ impl From<&SurfaceSource> for SurfaceSourceInfo {
     }
 }
 
-
 #[derive(Debug, Clone)]
 pub struct DmabufInfo {
     pub size: [u32; 2],

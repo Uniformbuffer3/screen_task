@@ -54,6 +54,7 @@ impl SurfaceManager {
         position: [i32; 3],
         size: [u32; 2],
     ) {
+        log::info!(target: "ScreenTask","Creating surface {}",id);
         let info = SurfaceSourceInfo::from(&source);
         let (texture_descriptor, texture_data, layout) =
             Self::prepare_texture(self.device, label.clone(), source);
@@ -75,9 +76,9 @@ impl SurfaceManager {
             update_context.write_resource(&mut vec![texture_write]);
         }
 
-
         let surface = SurfaceInfo::new(texture, texture_view, info, position, size);
-        let surface_data = surface.generate_data(self.data_buffer.next_slot() as u32);
+        let next_slot = self.data_buffer.next_slot() as u32;
+        let surface_data = surface.generate_data(next_slot);
         self.data_buffer.request(id, surface, surface_data);
         self.stack.push(id);
     }
@@ -88,6 +89,7 @@ impl SurfaceManager {
         id: &usize,
         source: SurfaceSource,
     ) {
+        log::info!(target: "ScreenTask","Updating source of surface {}",id);
         let device = self.device;
         if let Some(surface_info) = self.data_buffer.associated_data_mut(id) {
             if let Some(texture_descriptor) =
@@ -96,7 +98,9 @@ impl SurfaceManager {
                 let (texture_descriptor, texture_data, layout) =
                     Self::prepare_texture(device, texture_descriptor.label.clone(), source);
                 let texture_size = texture_descriptor.size.clone();
-                //update_context.update_texture_descriptor(&mut surface_info.texture_id,texture_descriptor);
+                update_context
+                    .update_texture_descriptor(&mut surface_info.texture_id, texture_descriptor);
+
                 if let Some(data) = texture_data {
                     let texture_write = Self::prepare_texture_write(
                         surface_info.texture_id,
@@ -107,10 +111,13 @@ impl SurfaceManager {
                     update_context.write_resource(&mut vec![texture_write]);
                 }
             };
-        };
+        } else {
+            println!("Failed");
+        }
     }
 
     pub fn update_data(&mut self, update_context: &mut UpdateContext, id: &usize, data: Vec<u8>) {
+        log::info!(target: "ScreenTask","Updating data of surface {}",id);
         if let Some(surface_info) = self.data_buffer.associated_data_mut(id) {
             if let Some(texture_descriptor) =
                 update_context.texture_descriptor_ref(&surface_info.texture_id)
@@ -135,36 +142,40 @@ impl SurfaceManager {
     }
 
     pub fn resize_surface(&mut self, id: &usize, size: [u32; 2]) -> bool {
+        log::info!(target: "ScreenTask","Resizing surface {} to {:?}",id,size);
         let size = [size[0] as f32, size[1] as f32];
         let offset = field_offset::offset_of!(Surface => size);
         self.data_buffer.pending_write_field(id, offset, size)
     }
 
     pub fn move_surface(&mut self, id: &usize, position: [i32; 3]) -> bool {
+        log::info!(target: "ScreenTask","Moving surface {} to {:?}",id,position);
         let position = [position[0] as f32, position[1] as f32, position[2] as f32];
         let offset = field_offset::offset_of!(Surface => position);
         self.data_buffer.pending_write_field(id, offset, position)
     }
 
     pub fn remove_surface(&mut self, update_context: &mut UpdateContext, id: &usize) -> bool {
-        self.data_buffer
-            .release_pending(id)
-            .map(|associated_data| {
-                update_context
-                    .remove_texture_view(&associated_data.texture_view_id)
-                    .unwrap();
-                update_context
-                    .remove_texture(&associated_data.texture_id)
-                    .unwrap();
-                let index = self
-                    .stack
-                    .iter()
-                    .position(|current_id| current_id == id)
-                    .unwrap();
-                self.stack.remove(index);
-                Some(())
-            })
-            .is_some()
+        log::info!(target: "ScreenTask","Removing surface {}",id);
+        if let Some(associated_data) = self.data_buffer.release_pending(id) {
+            let index = self
+                .stack
+                .iter()
+                .position(|current_id| current_id == id)
+                .unwrap();
+            self.stack.remove(index);
+            update_context
+                .remove_texture_view(&associated_data.texture_view_id)
+                .unwrap();
+            update_context
+                .remove_texture(&associated_data.texture_id)
+                .unwrap();
+
+            true
+        } else {
+            log::error!(target: "ScreenTask","Failed to remove surface {} because it does not exists",id);
+            false
+        }
     }
 
     pub fn rectangle_views(&self) -> Vec<TextureViewId> {
@@ -173,10 +184,21 @@ impl SurfaceManager {
             .map(|id| {
                 self.data_buffer
                     .associated_data(id)
+                    .map(|associated_data| associated_data.texture_view_id)
                     .unwrap()
-                    .texture_view_id
             })
             .collect()
+    }
+    pub fn update_image_indexes(&mut self) {
+        self.stack
+            .clone()
+            .into_iter()
+            .enumerate()
+            .for_each(|(image_index, id)| {
+                let offset = field_offset::offset_of!(Surface => image_index);
+                self.data_buffer
+                    .pending_write_field(&id, offset, image_index as u32);
+            });
     }
 
     pub fn update(&mut self, update_context: &mut UpdateContext) -> Vec<Command> {

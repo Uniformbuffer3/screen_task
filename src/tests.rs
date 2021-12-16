@@ -96,7 +96,6 @@ fn destroy_surface_test() {
             if time.elapsed().as_millis() > 3000 && !removed {
                 screen_task.remove_surface(0);
                 removed = true;
-                println!("Destroying surface!");
             }
             std::thread::sleep(std::time::Duration::from_millis(1000 / 60));
         },
@@ -164,7 +163,15 @@ fn multioutput_test() {
 #[test]
 fn projection_matrix_test() {
     use ultraviolet::{Mat4, Vec4};
-    let surface_position = Vec4::new(100.0,100.0,0.0,1.0);
-    let push_constants = PushConstants::new([800,800],1024);
-    println!("{:#?}",push_constants.projection_matrix * surface_position);
+    let surface_position = Vec4::new(100.0, 100.0, 0.0, 1.0);
+    let push_constants = PushConstants::new([0, 0], [800, 800], 1024);
+    println!("{:#?}", push_constants.projection_matrix * surface_position);
+}
+
+#[test]
+fn projection_matrix_test2() {
+    use ultraviolet::{Mat4, Vec4};
+    let surface_position = Vec4::new(0.0, 50.0, 0.0, 1.0);
+    let push_constants = crate::PushConstants::new([0, 50], [100, 100], 1024);
+    println!("{:#?}", push_constants.projection_matrix * surface_position);
 }

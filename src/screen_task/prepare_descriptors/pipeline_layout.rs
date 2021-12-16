@@ -8,6 +8,7 @@ impl ScreenTask {
         device: DeviceId,
         bind_group_layout: BindGroupLayoutId,
     ) -> PipelineLayoutDescriptor {
+        log::info!(target: "ScreenTask","Preparing pipeline layout descriptor");
         let aligned_size = ((std::mem::size_of::<PushConstants>() + 4 - 1) / 4) * 4;
         PipelineLayoutDescriptor {
             device,

@@ -12,6 +12,7 @@ impl ScreenTask {
         bind_group: BindGroupId,
         surface_manager: &SurfaceManager,
     ) -> CommandBufferDescriptor {
+        log::info!(target: "ScreenTask","Preparing command buffer descriptor");
         let render_passes: Vec<_> = display_resources
             .iter()
             .map(|display_resources| {
@@ -24,6 +25,7 @@ impl ScreenTask {
                             stages: wgpu::ShaderStage::VERTEX,
                             offset: 0,
                             data: bytemuck::bytes_of(&PushConstants::new(
+                                display_resources.display.position(),
                                 display_resources.display.size(),
                                 1024,
                             ))

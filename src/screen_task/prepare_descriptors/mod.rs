@@ -17,9 +17,10 @@ use crate::surface_manager::SurfaceManager;
 impl ScreenTask {
     pub(crate) fn init_device_resources(
         update_context: &mut UpdateContext,
+        external_display_id: usize,
         device: DeviceId,
         swapchain: SwapchainId,
-        display_position: [u32; 2],
+        //display_position: [u32; 2],
     ) -> DeviceResources {
         let surface_manager = SurfaceManager::new(update_context, device);
 
@@ -86,7 +87,13 @@ impl ScreenTask {
             .add_pipeline_layout_descriptor(pipeline_layout_descriptor)
             .unwrap();
 
-        let display = Display::new(update_context, device, swapchain, [0, 0]);
+        let display = Display::new(
+            update_context,
+            external_display_id,
+            device,
+            swapchain,
+            [0, 0],
+        );
         let display_resources = DisplayResources::new(
             update_context,
             display,

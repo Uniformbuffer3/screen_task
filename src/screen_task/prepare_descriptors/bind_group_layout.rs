@@ -9,7 +9,7 @@ impl ScreenTask {
         device: DeviceId,
         surface_manager: &SurfaceManager,
     ) -> BindGroupLayoutDescriptor {
-        log::info!(target: "ScreenTask","Preparing bind group layout for {} images",surface_manager.len());
+        log::info!(target: "ScreenTask","Preparing bind group layout descriptor for {} images",surface_manager.len());
 
         let mut entries = Vec::new();
         entries.push(wgpu_engine::BindGroupLayoutEntry {

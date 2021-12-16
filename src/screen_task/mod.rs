@@ -15,18 +15,46 @@ pub use crate::screen_task::events::ScreenTaskEvent;
 pub use crate::surface::*;
 pub use crate::surface_manager::SurfaceManager;
 
+/*
 #[repr(C)]
 #[derive(Debug, Clone, Copy, Pod, Zeroable)]
-pub struct PushConstants {
+pub struct PushConstantsOrig {
     pub projection_matrix: Mat4,
 }
-impl PushConstants {
+impl PushConstantsOrig {
     pub fn new(target_surface_size: [u32; 2], max_surface_count: u32) -> Self {
         let projection_matrix = Mat4::new(
             Vec4::new(2.0 / target_surface_size[0] as f32, 0.0, 0.0, 0.0),
             Vec4::new(0.0, -2.0 / target_surface_size[1] as f32, 0.0, 0.0),
             Vec4::new(0.0, 0.0, 1.0 / max_surface_count as f32, 0.0),
             Vec4::new(-1.0, 1.0, 0.0, 0.0),
+        );
+        Self { projection_matrix }
+    }
+}
+*/
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy, Pod, Zeroable)]
+pub struct PushConstants {
+    pub projection_matrix: Mat4,
+}
+impl PushConstants {
+    pub fn new(
+        target_surface_position: [i32; 2],
+        target_surface_size: [u32; 2],
+        max_surface_count: u32,
+    ) -> Self {
+        let projection_matrix = Mat4::new(
+            Vec4::new(2.0 / target_surface_size[0] as f32, 0.0, 0.0, 0.0),
+            Vec4::new(0.0, -2.0 / target_surface_size[1] as f32, 0.0, 0.0),
+            Vec4::new(0.0, 0.0, 1.0 / max_surface_count as f32, 0.0),
+            Vec4::new(
+                -1.0 - target_surface_position[0] as f32 / target_surface_size[0] as f32 * 2.0,
+                1.0 + target_surface_position[1] as f32 / target_surface_size[1] as f32 * 2.0,
+                0.0,
+                0.0,
+            ),
         );
         Self { projection_matrix }
     }
@@ -102,6 +130,13 @@ impl ScreenTask {
     pub fn remove_surface(&mut self, external_id: usize) {
         self.pending_events
             .push(ScreenTaskEvent::RemoveSurface { id: external_id });
+    }
+
+    pub fn move_output(&mut self, external_id: usize, position: [i32; 2]) {
+        self.pending_events.push(ScreenTaskEvent::MoveOutput {
+            id: external_id,
+            position,
+        });
     }
 
     pub fn features_and_limits() -> (wgpu::Features, wgpu::Limits) {

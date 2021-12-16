@@ -29,6 +29,7 @@ impl ScreenTask {
             pipeline_layout_descriptor,
         );
 
+        device_resources.surface_manager.update_image_indexes();
         let bind_group_descriptor = Self::prepare_bind_group(
             update_context,
             device,

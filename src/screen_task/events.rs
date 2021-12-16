@@ -27,6 +27,10 @@ pub enum ScreenTaskEvent {
         id: usize,
         position: [i32; 3],
     },
+    MoveOutput {
+        id: usize,
+        position: [i32; 2],
+    },
     RemoveSurface {
         id: usize,
     },
@@ -76,21 +80,33 @@ impl ScreenTask {
                 }
                 ScreenTaskEvent::ResizeSurface { id, size } => {
                     self.devices.values_mut().for_each(|device_resources| {
-                        assert!(device_resources.surface_manager.resize_surface(&id, size));
+                        device_resources.surface_manager.resize_surface(&id, size);
                     });
                 }
                 ScreenTaskEvent::MoveSurface { id, position } => {
                     self.devices.values_mut().for_each(|device_resources| {
-                        assert!(device_resources.surface_manager.move_surface(&id, position));
+                        device_resources.surface_manager.move_surface(&id, position);
                     });
                 }
                 ScreenTaskEvent::RemoveSurface { id } => {
                     self.devices.values_mut().for_each(|device_resources| {
-                        assert!(device_resources
+                        device_resources
                             .surface_manager
-                            .remove_surface(update_context, &id));
+                            .remove_surface(update_context, &id);
                     });
                     update_resource_needed = true;
+                }
+                ScreenTaskEvent::MoveOutput { id, position } => {
+                    self.devices
+                        .iter_mut()
+                        .for_each(|(device, device_resources)| {
+                            device_resources
+                                .displays
+                                .iter_mut()
+                                .find(|display| display.display.external_id() == id)
+                                .map(|display| display.display.move_output(position));
+                            Self::update_command_buffer(update_context, *device, device_resources);
+                        });
                 }
             }
         }
