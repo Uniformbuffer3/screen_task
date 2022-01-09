@@ -4,6 +4,7 @@ use crate::screen_task::device_resources::DeviceResources;
 use crate::screen_task::ScreenTask;
 
 impl ScreenTask {
+    /// Update the render pipeline descriptor for the passed DeviceResources.
     pub(crate) fn update_render_pipeline(
         update_context: &mut UpdateContext,
         device: DeviceId,

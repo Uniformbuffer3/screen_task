@@ -2,6 +2,7 @@ use crate::surface_manager::SurfaceManager;
 use std::num::NonZeroU32;
 use wgpu_engine::*;
 
+/// Resources and informations directly related to a display.
 pub struct Display {
     external_id: usize,
     device: DeviceId,
@@ -134,6 +135,7 @@ impl Display {
     }
 }
 
+/// Resources and informations indirectly related to a display.
 pub struct DisplayResources {
     pub display: Display,
     pub render_pipeline_ready: bool,

@@ -5,6 +5,7 @@ use crate::SurfaceManager;
 use wgpu_engine::*;
 
 impl ScreenTask {
+    /// Generate the render pipeline descriptor.
     pub(crate) fn prepare_render_pipeline(
         update_context: &mut UpdateContext,
         device: DeviceId,

@@ -15,27 +15,11 @@ pub use crate::screen_task::events::ScreenTaskEvent;
 pub use crate::surface::*;
 pub use crate::surface_manager::SurfaceManager;
 
-/*
 #[repr(C)]
 #[derive(Debug, Clone, Copy, Pod, Zeroable)]
-pub struct PushConstantsOrig {
-    pub projection_matrix: Mat4,
-}
-impl PushConstantsOrig {
-    pub fn new(target_surface_size: [u32; 2], max_surface_count: u32) -> Self {
-        let projection_matrix = Mat4::new(
-            Vec4::new(2.0 / target_surface_size[0] as f32, 0.0, 0.0, 0.0),
-            Vec4::new(0.0, -2.0 / target_surface_size[1] as f32, 0.0, 0.0),
-            Vec4::new(0.0, 0.0, 1.0 / max_surface_count as f32, 0.0),
-            Vec4::new(-1.0, 1.0, 0.0, 0.0),
-        );
-        Self { projection_matrix }
-    }
-}
+/**
+Constant data passed to the vertex shader stage.
 */
-
-#[repr(C)]
-#[derive(Debug, Clone, Copy, Pod, Zeroable)]
 pub struct PushConstants {
     pub projection_matrix: Mat4,
 }
@@ -62,6 +46,9 @@ impl PushConstants {
 
 pub const DEPTH_STENCIL_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
 
+/**
+Task compatible with WGpuEngine to display surfaces on the screen.
+*/
 pub struct ScreenTask {
     pending_events: Vec<ScreenTaskEvent>,
     devices: HashMap<DeviceId, DeviceResources>,
@@ -81,6 +68,7 @@ impl ScreenTask {
         }
     }
 
+    /// Create a new surface and assign it the provided external_id.
     pub fn create_surface(
         &mut self,
         external_id: usize,
@@ -99,6 +87,7 @@ impl ScreenTask {
         });
     }
 
+    /// Update the source of the surface with the provided external_id.
     pub fn update_source(&mut self, external_id: usize, source: SurfaceSource) {
         self.pending_events.push(ScreenTaskEvent::UpdateSource {
             id: external_id,
@@ -106,6 +95,7 @@ impl ScreenTask {
         });
     }
 
+    /// Update the data of the surface with the provided external_id.
     pub fn update_data(&mut self, external_id: usize, data: Vec<u8>) {
         self.pending_events.push(ScreenTaskEvent::UpdateData {
             id: external_id,
@@ -113,6 +103,7 @@ impl ScreenTask {
         });
     }
 
+    /// Resize the surface with the provided external_id.
     pub fn resize_surface(&mut self, external_id: usize, size: [u32; 2]) {
         self.pending_events.push(ScreenTaskEvent::ResizeSurface {
             id: external_id,
@@ -120,6 +111,7 @@ impl ScreenTask {
         });
     }
 
+    /// Move the surface with the provided external_id.
     pub fn move_surface(&mut self, external_id: usize, position: [i32; 3]) {
         self.pending_events.push(ScreenTaskEvent::MoveSurface {
             id: external_id,
@@ -127,11 +119,13 @@ impl ScreenTask {
         });
     }
 
+    /// Remove the surface with the provided external_id.
     pub fn remove_surface(&mut self, external_id: usize) {
         self.pending_events
             .push(ScreenTaskEvent::RemoveSurface { id: external_id });
     }
 
+    /// Move the output with the provided external_id.
     pub fn move_output(&mut self, external_id: usize, position: [i32; 2]) {
         self.pending_events.push(ScreenTaskEvent::MoveOutput {
             id: external_id,

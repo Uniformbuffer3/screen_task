@@ -6,6 +6,10 @@ mod prepare_texture_view;
 mod prepare_texture_write;
 
 #[derive(Debug)]
+/**
+Manager responsible to correctly manage rendering resources (like buffers) where surface related data are stored,
+so it is also responsible to correctly synchronize the data with the gpu.
+*/
 pub struct SurfaceManager {
     device: DeviceId,
     id_counter: usize,
@@ -31,20 +35,24 @@ impl SurfaceManager {
         }
     }
 
+    /// Returns the underlying BufferId.
     pub fn buffer_id(&self) -> &BufferId {
         self.data_buffer.id()
     }
 
+    /// Book a identifier for a surface id. The returned id will not be assigned to other surfaces.
     pub fn book_id(&mut self) -> usize {
         let id = self.id_counter;
         self.id_counter += 1;
         id
     }
 
+    /// Returns how many surfaces are stored.
     pub fn len(&self) -> usize {
         self.stack.len()
     }
 
+    /// Create a new surface and assign it the provided id.
     pub fn create_surface(
         &mut self,
         update_context: &mut UpdateContext,
@@ -83,6 +91,7 @@ impl SurfaceManager {
         self.stack.push(id);
     }
 
+    /// Update the source of the surface with the provided id.
     pub fn update_source(
         &mut self,
         update_context: &mut UpdateContext,
@@ -116,6 +125,7 @@ impl SurfaceManager {
         }
     }
 
+    /// Update the data of the surface with the provided id.
     pub fn update_data(&mut self, update_context: &mut UpdateContext, id: &usize, data: Vec<u8>) {
         log::info!(target: "ScreenTask","Updating data of surface {}",id);
         if let Some(surface_info) = self.data_buffer.associated_data_mut(id) {
@@ -141,6 +151,7 @@ impl SurfaceManager {
         };
     }
 
+    /// Resize the surface with the provided id.
     pub fn resize_surface(&mut self, id: &usize, size: [u32; 2]) -> bool {
         log::info!(target: "ScreenTask","Resizing surface {} to {:?}",id,size);
         let size = [size[0] as f32, size[1] as f32];
@@ -148,6 +159,7 @@ impl SurfaceManager {
         self.data_buffer.pending_write_field(id, offset, size)
     }
 
+    /// Move the surface with the provided id.
     pub fn move_surface(&mut self, id: &usize, position: [i32; 3]) -> bool {
         log::info!(target: "ScreenTask","Moving surface {} to {:?}",id,position);
         let position = [position[0] as f32, position[1] as f32, position[2] as f32];
@@ -155,6 +167,7 @@ impl SurfaceManager {
         self.data_buffer.pending_write_field(id, offset, position)
     }
 
+    /// Remove the surface with the provided id.
     pub fn remove_surface(&mut self, update_context: &mut UpdateContext, id: &usize) -> bool {
         log::info!(target: "ScreenTask","Removing surface {}",id);
         if let Some(associated_data) = self.data_buffer.release_pending(id) {
@@ -178,6 +191,7 @@ impl SurfaceManager {
         }
     }
 
+    /// Returns the TextureViewIds of all the stored
     pub fn rectangle_views(&self) -> Vec<TextureViewId> {
         self.stack
             .iter()
@@ -189,6 +203,8 @@ impl SurfaceManager {
             })
             .collect()
     }
+
+    /// Update the texture indexs associated with the surfaces.
     pub fn update_image_indexes(&mut self) {
         self.stack
             .clone()
@@ -201,6 +217,7 @@ impl SurfaceManager {
             });
     }
 
+    /// Update buffer data and returns eventual commands that need to be scheduled with a command buffer.
     pub fn update(&mut self, update_context: &mut UpdateContext) -> Vec<Command> {
         self.data_buffer.update(update_context)
     }

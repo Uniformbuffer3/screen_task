@@ -2,6 +2,8 @@ use crate::display::DisplayResources;
 use crate::surface_manager::SurfaceManager;
 use wgpu_engine::*;
 
+
+/// Rendering resources related to a single device.
 pub struct DeviceResources {
     pub displays: Vec<DisplayResources>,
 

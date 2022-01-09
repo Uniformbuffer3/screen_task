@@ -3,6 +3,7 @@ use crate::ScreenTask;
 use wgpu_engine::*;
 
 impl ScreenTask {
+    /// Generate the pipeline layout descriptor.
     pub(crate) fn prepare_pipeline_layout(
         _update_context: &mut UpdateContext,
         device: DeviceId,

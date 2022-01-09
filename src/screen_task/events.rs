@@ -3,6 +3,7 @@ use wgpu_engine::*;
 use crate::screen_task::ScreenTask;
 use crate::surface::*;
 
+/// Events of the ScreenTask task.
 pub enum ScreenTaskEvent {
     CreateSurface {
         id: usize,

@@ -5,6 +5,7 @@ use crate::ScreenTask;
 use wgpu_engine::*;
 
 impl ScreenTask {
+    /// Generate the command buffer descriptor.
     pub(crate) fn prepare_command_buffer(
         _update_context: &mut UpdateContext,
         device: DeviceId,

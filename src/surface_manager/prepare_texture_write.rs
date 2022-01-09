@@ -2,6 +2,7 @@ use crate::surface_manager::SurfaceManager;
 use wgpu_engine::*;
 
 impl SurfaceManager {
+    /// Generate the resource write for the provided texture.
     pub fn prepare_texture_write(
         texture: TextureId,
         data: Vec<u8>,

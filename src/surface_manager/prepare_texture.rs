@@ -3,6 +3,7 @@ use crate::surface_manager::SurfaceManager;
 use wgpu_engine::*;
 
 impl SurfaceManager {
+    /// Generate the texture descriptor, image data layout and the eventual data from a SurfaceSource.
     pub fn prepare_texture(
         device: DeviceId,
         label: String,

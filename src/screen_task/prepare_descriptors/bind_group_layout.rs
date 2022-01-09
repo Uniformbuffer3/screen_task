@@ -4,6 +4,7 @@ use std::num::NonZeroU32;
 use wgpu_engine::*;
 
 impl ScreenTask {
+    /// Generate the bind group layout descriptor.
     pub(crate) fn prepare_bind_group_layout(
         _update_context: &mut UpdateContext,
         device: DeviceId,

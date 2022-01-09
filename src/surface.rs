@@ -3,6 +3,7 @@ use std::path::PathBuf;
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy, Pod, Zeroable)]
+/// Plain surface data representation used to send data to the gpu.
 pub struct Surface {
     pub position: [f32; 3],
     pub size: [f32; 2],
@@ -10,6 +11,7 @@ pub struct Surface {
 }
 
 #[derive(Debug, Clone)]
+/// Informations and data related to a surface.
 pub enum SurfaceSource {
     //File { path: PathBuf },
     Dmabuf {
@@ -55,6 +57,7 @@ impl SurfaceSource {
 }
 
 #[derive(Debug, Clone)]
+/// Informations about the surface's data source.
 pub enum SurfaceSourceInfo {
     Dmabuf(DmabufInfo),
     HostAllocation(HostAllocationInfo),
@@ -84,6 +87,7 @@ impl From<&SurfaceSource> for SurfaceSourceInfo {
 }
 
 #[derive(Debug, Clone)]
+/// Informations about a Dma buffer.
 pub struct DmabufInfo {
     pub size: [u32; 2],
     pub modifier: wgpu_engine::DrmModifier,
@@ -93,6 +97,7 @@ pub struct DmabufInfo {
 }
 
 #[derive(Debug, Clone)]
+/// Information related to a Host allocation.
 pub struct HostAllocationInfo {
     pub size: [u32; 2],
     pub format: wgpu_engine::TextureFormat,
@@ -100,6 +105,7 @@ pub struct HostAllocationInfo {
 }
 
 #[derive(Debug)]
+/// Informations related to a surface.
 pub struct SurfaceInfo {
     pub texture_id: wgpu_engine::TextureId,
     pub texture_view_id: wgpu_engine::TextureViewId,

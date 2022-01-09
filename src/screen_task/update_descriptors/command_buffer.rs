@@ -4,6 +4,7 @@ use crate::screen_task::device_resources::DeviceResources;
 use crate::screen_task::ScreenTask;
 
 impl ScreenTask {
+    /// Update the command buffer descriptor for the passed DeviceResources.
     pub(crate) fn update_command_buffer(
         update_context: &mut UpdateContext,
         device: DeviceId,

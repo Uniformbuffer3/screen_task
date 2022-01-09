@@ -3,6 +3,7 @@ use crate::ScreenTask;
 use wgpu_engine::*;
 
 impl ScreenTask {
+    /// Generate the bind group descriptor.
     pub(crate) fn prepare_bind_group(
         _update_context: &mut UpdateContext,
         device: DeviceId,

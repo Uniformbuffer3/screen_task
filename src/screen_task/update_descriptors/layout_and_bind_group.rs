@@ -4,6 +4,7 @@ use crate::screen_task::device_resources::DeviceResources;
 use crate::screen_task::ScreenTask;
 
 impl ScreenTask {
+    /// Update the pipeline layout, bind group layout and the bind group descriptors for the passed DeviceResources.
     pub(crate) fn update_layout_and_bind_groups(
         update_context: &mut UpdateContext,
         device: DeviceId,

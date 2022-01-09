@@ -2,6 +2,7 @@ use crate::surface_manager::SurfaceManager;
 use wgpu_engine::*;
 
 impl SurfaceManager {
+    /// Generate the texture view descriptor from a texture.
     pub fn prepare_texture_view(
         &self,
         label: String,
